@@ -1,0 +1,132 @@
+
+#include <iostream>
+#include <string>
+#include <cmath>
+using namespace std;
+int y = 0, x = 0;
+string StrToHex(string &s)
+{
+	string str;
+	int len = s.size();
+	for (int i = 0; i < len; i += 2)
+	{
+		string tmp = s.substr(i, 2);
+		str.push_back(stoi(tmp, 0, 16));
+	}
+	return str;
+}
+/* 自增 */
+void inc(int &x, int &y)
+{
+	x += 2;
+	y++;
+}
+/* 读取数据输出（解压）部分 */
+string read_str(string &s)
+{
+	string str;
+	str.resize(0x20, 0x0);
+	/* 上半部 */
+	y = 0, x = 4;
+	while (y != 6)
+	{
+		str[x] = ((unsigned char)s[y] & 0xF0);
+		inc(x, y);
+	}
+	y = 0, x = 5;
+	while (y != 6)
+	{
+		str[x] = ((unsigned char)s[y] << 4);
+		inc(x, y);
+	}
+	y = 6, x = 4;
+	while (y != 0xC)
+	{
+		str[x] |= ((unsigned char)s[y] >> 4);
+		inc(x, y);
+	}
+	y = 6, x = 5;
+	while (y != 0xC)
+	{
+		str[x] |= ((unsigned char)s[y] & 0xF);
+		inc(x, y);
+	}
+	/*第二部分*/
+	y = 0xC, x = 0x14;
+	while (y != 0x12)
+	{
+		str[x] = ((unsigned char)s[y] & 0xF0);
+		inc(x, y);
+	}
+	y = 0xC, x = 0x15;
+	while (y != 0x12)
+	{
+		str[x] = ((unsigned char)s[y] << 4);
+		inc(x, y);
+	}
+	return str;
+}
+/*读取并输入(压缩)部分*/
+string write_str(string &s)
+{
+	string str;
+	str.resize(18);
+	y = 0, x = 4;
+	while (y != 6)
+	{
+		str[y] = ((unsigned char)s[x] & 0xF0);
+		inc(x, y);
+	}
+	y = 0, x = 5;
+	while (y != 6)
+	{
+		str[y] |= ((unsigned char)s[x] >> 4);
+		inc(x, y);
+	}
+	y = 6, x = 4;
+	while (y != 0xC)
+	{
+		str[y] = ((unsigned char)(s[x]&0xF) << 4);
+		inc(x, y);
+	}
+	y = 6, x = 5;
+	while (y != 0xC)
+	{
+		str[y] |= ((unsigned char)s[x] & 0xF);
+		inc(x, y);
+	}
+	/*第二部分*/
+	y = 0xC, x = 0x14;
+	while (y != 0x12)
+	{
+		str[y] = ((unsigned char)s[x] & 0xF0);
+		inc(x, y);
+	}
+	y = 0xC, x = 0x15;
+	while (y != 0x12)
+	{
+		str[y] |= ((unsigned char)s[x] >> 4);
+		inc(x, y);
+	}
+	return str;
+}
+string unfold(string &s)
+{
+	s = read_str(s);
+	string str;
+	str.resize(0x40, 0x0);
+	for (int i = 0; i != 8; ++i)
+	{
+		str[i] = s[i];
+		str[i + 0x10] = s[i + 8];
+		str[i + 0x20] = s[i + 0x10];
+		str[i + 0x40] = s[i + 0x18];
+	}
+}
+int main()
+{/* 测试代码 */
+	string s = { "012017D11110CD7F90F2F00FC62084F4C02E" };
+	s = StrToHex(s);
+	s = read_str(s);
+	s = write_str(s);
+}
